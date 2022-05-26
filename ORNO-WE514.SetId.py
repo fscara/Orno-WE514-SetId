@@ -33,7 +33,9 @@ from pymodbus.constants import Defaults as ModbusDefaults
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 from pymodbus.pdu import ModbusRequest
 
-
+# Function 0x28 is not a Standard Function Code according to ModBus specs
+# It is even outside the range dedicated to Custom Function Code and its 
+# syntax is undocumented.
 # Default password is 00000000 (four zeroed bytes)
 class SendOrnoPassword(ModbusRequest):
     function_code = 0x28
@@ -43,6 +45,8 @@ class SendOrnoPassword(ModbusRequest):
         ModbusRequest.__init__(self, **kwargs)
 
     def encode(self):
+        # This byte sequence works only to write the ID register
+        # It fails to enable writing to other registers
         writeEnableCmd = b'\xfe\x01\x00\x02\x04\x00\x00\x00\x00'
         return writeEnableCmd
 
@@ -110,8 +114,10 @@ client.execute(writeRequest)
 # Write new ID
 try:
     # Single Register Write does not work...
+    # Response frame 0x86 0x01 means "Single Write Error: function not supported"
     # client.write_register(address=0x110, value=desiredID, unit=currentID)
     client.write_registers(0x110, [desiredID], unit=currentID)
+    # Unwanted response frame 0x90 0x04 means "Multiple Write Error: Write failed"
 except Exception as ex:
     print("Error changing to ID %d. Exiting" % desiredID )
     sys.exit(1)
