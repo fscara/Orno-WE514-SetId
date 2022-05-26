@@ -34,9 +34,8 @@ from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 from pymodbus.pdu import ModbusRequest
 
 # Function 0x28 is not a Standard Function Code according to ModBus specs
-# It is even outside the range dedicated to Custom Function Code and its 
+# It is even outside the range dedicated to Custom Function Codes and its 
 # syntax is undocumented.
-# Default password is 00000000 (four zeroed bytes)
 class SendOrnoPassword(ModbusRequest):
     function_code = 0x28
     _rtu_frame_size = 13
@@ -45,6 +44,7 @@ class SendOrnoPassword(ModbusRequest):
         ModbusRequest.__init__(self, **kwargs)
 
     def encode(self):
+        # Default password is 00000000 (four zeroed bytes)
         # This byte sequence works only to write the ID register
         # It fails to enable writing to other registers
         writeEnableCmd = b'\xfe\x01\x00\x02\x04\x00\x00\x00\x00'
